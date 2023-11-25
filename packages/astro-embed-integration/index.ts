@@ -6,11 +6,29 @@ const importNamespace = 'AuToImPoRtEdAstroEmbed';
 /**
  * Astro embed MDX integration.
  */
+async function files() {
+	const PAGES = await import.meta.glob('/demo/src/pages/*.{md,mdx}', { as: 'raw', eager: true });
+
+	Object.keys(PAGES).forEach(async (key) => {
+		const module = await PAGES[key];
+
+		const has1 = /import {[^}]+} from 'astro-embed';/.test(module || "");
+		const has2 = /import \* as Component from 'astro-embed';/.test(module || "");
+		if (has1 || has2) {
+			console.log(`${key} contains`);
+
+		}
+	});
+
+}
+
+
 export default function embed() {
 	const AstroEmbed: AstroIntegration = {
 		name: 'astro-embed',
 		hooks: {
-			'astro:config:setup': ({ config, updateConfig }) => {
+			'astro:config:setup': async ({ config, updateConfig }) => {
+				files();
 				checkIntegrationsOrder(config);
 				updateConfig({
 					markdown: {
@@ -49,7 +67,7 @@ function checkIntegrationsOrder({ integrations }: AstroConfig) {
 	if (mdxIndex > -1 && mdxIndex < embedIndex) {
 		throw new Error(
 			'MDX integration configured before astro-embed.\n' +
-				'Please move `mdx()` after `embeds()` in the `integrations` array in astro.config.mjs.'
+			'Please move `mdx()` after `embeds()` in the `integrations` array in astro.config.mjs.'
 		);
 	}
 }
